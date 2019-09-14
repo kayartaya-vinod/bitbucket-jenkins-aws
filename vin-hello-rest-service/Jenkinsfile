@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    
+	tools {
+        maven 'maven-362'
+        jdk 'jdk-8'
+    }
+    environment {
+    	//Use Pipeline Utility Steps plugin to read information from pom.xml into env variables
+    	IMAGE = readMavenPom().getArtifactId()
+        FINAL_NAME = readMavenPom().getBuild().getFinalName()
+    }
+    stages {
+    	stage ('Clean') {
+		    steps {
+            	sh "mvn clean"
+            }
+		}
+        stage ('Test and Build') {
+		    steps {
+            	sh "mvn package"
+            }
+		}
+        stage('Sonar Analysis, Quality Gate') {
+		    steps {
+		    	withSonarQubeEnv('SonarServer') {
+                	sh "mvn sonar:sonar"
+                }
+				
+				timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage ('Docker Image') {
+        	steps {
+        		sh "(docker stop ${FINAL_NAME}-container || true) && (docker rm ${FINAL_NAME}-container || true) && (docker rmi ${FINAL_NAME} || true)"
+        	}
+        }
+        stage ('Docker Run') {
+        	steps {
+            	sh "docker build ./ -t ${FINAL_NAME} && docker run -d -p 80:4000 --name ${FINAL_NAME}-container ${FINAL_NAME}"
+        	}
+        }
+	}
+}

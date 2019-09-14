@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    environment {
+        CI = 'true' 
+        FINAL_NAME = 'vinod-react-app'
+    }
+    stages {
+    	stage ('Clean') {
+		    steps {
+            	sh "rm -rf build"
+            }
+		}
+        // stage ('Install Dependencies') {
+		//     steps {
+        //         nodejs(nodeJSInstallationName: 'node12') {
+        //             sh 'node -v'
+        //             sh 'npm -v'
+        //         }            
+        //     }
+		// }        
+        stage ('Install Dependencies') {
+		    steps {
+                nodejs(nodeJSInstallationName: 'node12') {
+                    sh "npm install"
+                }              	
+            }
+		}
+        stage ('Test') {
+		    steps {
+                nodejs(nodeJSInstallationName: 'node12') {
+            	    sh "npm test"
+                }
+            }
+		}
+        stage('Sonar Analysis, Quality Gate') {
+		    steps {
+		    	withSonarQubeEnv('SonarServer') {
+                    nodejs(nodeJSInstallationName: 'node12') {
+                	    sh "npm run quality-check"
+                    }
+                }
+				
+				timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage ('Build') {
+		    steps {
+                nodejs(nodeJSInstallationName: 'node12') {
+            	    sh "npm run build"
+                }
+            }
+		}
+        stage ('Docker Image') {
+        	steps {
+        		sh "(docker stop ${FINAL_NAME}-container || true) && (docker rm ${FINAL_NAME}-container || true) && (docker rmi ${FINAL_NAME} || true)"
+        	}
+        }
+        stage ('Docker Run') {
+        	steps {
+            	sh "docker build ./ -t ${FINAL_NAME} && docker run -d -p 80:4000 --name ${FINAL_NAME}-container ${FINAL_NAME}"
+        	}
+        }
+	}
+}
