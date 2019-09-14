@@ -1,11 +1,14 @@
+# Bitbucket + Jenkins Declarative Pipeline + AWS + Docker
+
+
 Two projects are here:
 
 1. Frontend React Hello App: vinod-react-app
 1. Backend Spring boot REST service: vin-hello-rest-service
 
-# Important
 
-`Dockerfile` for the frontend/React app
+
+## `Dockerfile` for the frontend/React app
 
 ```sh
 FROM python
@@ -15,7 +18,7 @@ CMD ["python", "-m", "http.server", "4000"]
 EXPOSE 4000
 ```
 
-Remember these points:
+### Remember these points:
 
 1. The value 4000 represents the port number being used by the HTTP server within the docker container
 2. And this value should be exposed
@@ -29,10 +32,10 @@ stage ('Docker Run') {
 }
 ```
 
-## So, best is to keep the file unchanged!
+So, best is to keep the file unchanged!
 
 
-`Jenkinsfile` for the frontend application
+## `Jenkinsfile` for the frontend application
 
 ```sh
 pipeline {
@@ -108,7 +111,7 @@ The only value you may want to consider changing in the above file is `FINAL_NAM
 ---
 
 
-`Dockerfile` for the backend/REST service
+## `Dockerfile` for the backend/REST service
 
 ```sh
 FROM openjdk:8
@@ -118,7 +121,7 @@ ENTRYPOINT ["java", "-jar", "-Dserver.port=4000", "/hello-rest-service.jar"]
 EXPOSE 4000
 ```
 
-## Remember the following points:
+### Remember the following points:
 
 The `ADD` command takes the generated Spring boot jar file (which derives its name from the `<finalName>` of the pom.xml) as the first argument and adds to the root of docker container with a name mentioned as the second parameter. Generally, we keep the same name to avoid confusion. For each Spring boot project, update these names based on the value of `<finalName>` element, under `<build>` tag.
 
