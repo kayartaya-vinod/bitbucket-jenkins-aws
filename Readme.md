@@ -6,6 +6,9 @@ Two projects are here:
 1. Frontend React Hello App: vinod-react-app
 1. Backend Spring boot REST service: vin-hello-rest-service
 
+<img src="images/frontend.png">
+<img src="images/backend.png">
+
 
 
 ## `Dockerfile` for the frontend/React app
